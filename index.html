@@ -66,7 +66,7 @@
     <div class="max-w-5xl mx-auto p-4 md:p-8 pb-12">
         <nav class="sticky top-2 z-40 flex justify-between items-center mb-6 p-3 md:p-4 rounded-2xl shadow-lg glass-nav dark:bg-gray-800/80 border border-white/20">
             <h1 class="text-xl md:text-2xl font-black text-orange-600 flex items-center gap-2 italic">
-                🍳 ResepKepepet<span class="hidden xs:inline">ResepKepepet</span> <span class="text-[9px] md:text-[10px] bg-orange-600 text-white px-2 py-1 rounded-md not-italic uppercase tracking-widest">v2.5</span>
+                🍳ResepKepepet <span class="hidden xs:inline">ResepKepepet</span> <span class="text-[9px] md:text-[10px] bg-orange-600 text-white px-2 py-1 rounded-md not-italic uppercase tracking-widest">v2.5</span>
             </h1>
             <div class="flex gap-2">
                 <button onclick="toggleHistory()" class="history-btn px-3 py-2 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-200 rounded-xl font-bold text-xs md:text-sm active:scale-95 transition-transform">📜 Riwayat</button>
@@ -105,6 +105,7 @@
         </div>
     </div>
 
+    <!-- SETTINGS MODAL (SUDAH DIUBAH: CONFIG FIREBASE DIHILANGKAN DARI SINI) -->
     <div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden p-2 md:p-4">
         <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-8 shadow-2xl animate__animated animate__zoomIn max-h-[95vh] overflow-y-auto">
             <h3 class="text-xl md:text-2xl font-black mb-6 text-orange-600 italic">Kitchen Settings</h3>
@@ -117,10 +118,11 @@
                     <label class="block text-[10px] font-bold mb-1 md:mb-2 uppercase opacity-50">Model ID</label>
                     <input type="text" id="model-input" class="w-full p-3 md:p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600 font-mono text-sm" placeholder="gemini-2.0-flash-exp">
                 </div>
-                <div class="pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <label class="block text-[10px] font-bold mb-1 md:mb-2 uppercase text-blue-500">Firebase Config (JSON)</label>
-                    <textarea id="firebase-config" class="w-full p-3 md:p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600 font-mono text-[10px]" rows="6" placeholder='{ "apiKey": "...", "projectId": "..." }'></textarea>
-                </div>
+                
+                <p class="text-[10px] text-gray-400 italic mt-2 border-t pt-2 dark:border-gray-600">
+                    * Konfigurasi Firebase kini tertanam di dalam kode sumber (HTML).
+                </p>
+
                 <button onclick="saveSettings()" class="w-full bg-orange-600 text-white font-black py-4 rounded-xl active:scale-95 transition shadow-lg">SIMPAN</button>
                 <button onclick="toggleSettings()" class="w-full text-xs text-gray-400 font-bold uppercase py-2">Tutup</button>
             </div>
@@ -131,13 +133,35 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
+        // ==========================================
+        // --- KONFIGURASI FIREBASE (ISI DI SINI) ---
+        // ==========================================
+        // Ganti titik-titik di bawah dengan data dari Firebase Console Anda
+       const firebaseConfig = {
+        apiKey: "AIzaSyC67ZMqywH6Nj_Jm5EjStcT4xq_qRv7yB8",
+        authDomain: "kulkas-ai.firebaseapp.com",
+        projectId: "kulkas-ai",
+        storageBucket: "kulkas-ai.firebasestorage.app",
+        messagingSenderId: "364317481294",
+        appId: "1:364317481294:web:d2e69c3b82b54b1d0e661f",
+        measurementId: "G-G4LH0L728M"
+        };
+        // ==========================================
+
         let db;
-        const configRaw = localStorage.getItem('firebase_config');
-        if (configRaw) {
-            try {
-                const app = initializeApp(JSON.parse(configRaw));
+        
+        // Inisialisasi Firebase Langsung dari Kode
+        try {
+            // Cek sederhana apakah user sudah mengisi config atau belum
+            if (firebaseConfig.apiKey && !firebaseConfig.apiKey.includes(".....")) {
+                const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
-            } catch (e) { console.error("Firebase Error:", e); }
+                console.log("🔥 Firebase Connected via Hardcoded Config!");
+            } else {
+                console.warn("⚠️ Firebase Config belum diisi di dalam script HTML.");
+            }
+        } catch (e) { 
+            console.error("Firebase Init Error:", e); 
         }
 
         window.generateRecipe = async () => {
@@ -145,7 +169,11 @@
             const model = localStorage.getItem('gemini_selected_model') || "gemini-1.5-flash";
             const bahan = document.getElementById('ingredients').value;
 
-            if (!key || !bahan) return alert("Lengkapi API Key dan Bahan!");
+            if (!key || !bahan) {
+                alert("Mohon lengkapi API Key Gemini dan Bahan makanan!");
+                toggleSettings(); // Buka settings jika belum lengkap
+                return;
+            }
 
             const loading = document.getElementById('loading');
             const results = document.getElementById('results-container');
@@ -166,7 +194,11 @@
                 });
 
                 const data = await response.json();
+                
+                if (!data.candidates) throw new Error("Gagal mengambil data dari AI.");
+
                 const rawText = data.candidates[0].content.parts[0].text;
+                // Bersihkan markdown code block jika ada
                 const cleanJson = JSON.parse(rawText.replace(/```json|```/g, ''));
 
                 renderRecipe('recipe-1', cleanJson.resep1, 'orange');
@@ -176,41 +208,83 @@
                 btnPrint.classList.remove('hidden');
                 confetti({ particleCount: 100, spread: 60, origin: { y: 0.8 } });
 
+                // Simpan ke Firebase jika DB aktif
                 if (db) {
-                    await addDoc(collection(db, "recipes"), {
-                        bahan: bahan,
-                        data: cleanJson,
-                        date: new Date()
-                    });
+                    try {
+                        await addDoc(collection(db, "recipes"), {
+                            bahan: bahan,
+                            data: cleanJson,
+                            date: new Date()
+                        });
+                    } catch (err) {
+                        console.error("Gagal simpan ke history (Cek Rules/Config):", err);
+                    }
                 }
                 
                 // Auto scroll ke hasil di mobile
                 window.scrollTo({ top: results.offsetTop - 80, behavior: 'smooth' });
 
-            } catch (e) { alert("Error: " + e.message); }
+            } catch (e) { 
+                alert("Error: " + e.message); 
+                console.error(e);
+            }
             finally { loading.classList.add('hidden'); }
         };
 
         window.toggleHistory = async () => {
             const container = document.getElementById('history-container');
             const list = document.getElementById('history-list');
-            container.classList.toggle('hidden');
+            
+            // Toggle visibility
+            if (container.classList.contains('hidden')) {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+                return;
+            }
 
-            if (!db) return alert("Konfigurasi Firebase belum diisi!");
-            if (container.classList.contains('hidden')) return;
+            if (!db) {
+                list.innerHTML = "<p class='col-span-2 text-center text-red-500 py-4'>⚠️ Konfigurasi Firebase belum diisi di dalam Source Code HTML.</p>";
+                return;
+            }
 
             list.innerHTML = "<p class='col-span-2 text-center animate-pulse py-4'>Mengambil data cloud...</p>";
-            const q = query(collection(db, "recipes"), orderBy("date", "desc"), limit(6));
-            const snap = await getDocs(q);
             
-            list.innerHTML = "";
-            snap.forEach(doc => {
-                const item = doc.data();
-                const div = document.createElement('div');
-                div.className = "bg-white dark:bg-gray-800 p-4 rounded-xl shadow border-l-8 border-blue-500 mx-2";
-                div.innerHTML = `<h4 class='font-black text-orange-600 text-sm'>${item.data.resep1.nama}</h4><p class='text-[10px] opacity-50 truncate'>${item.bahan}</p>`;
-                list.appendChild(div);
-            });
+            try {
+                const q = query(collection(db, "recipes"), orderBy("date", "desc"), limit(6));
+                const snap = await getDocs(q);
+                
+                list.innerHTML = "";
+                if (snap.empty) {
+                    list.innerHTML = "<p class='col-span-2 text-center text-gray-400 py-4'>Belum ada riwayat resep.</p>";
+                }
+
+                snap.forEach(doc => {
+                    const item = doc.data();
+                    const div = document.createElement('div');
+                    div.className = "bg-white dark:bg-gray-800 p-4 rounded-xl shadow border-l-8 border-blue-500 mx-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition";
+                    // Tampilkan tanggal simpel
+                    const dateStr = item.date && item.date.seconds ? new Date(item.date.seconds * 1000).toLocaleDateString('id-ID') : '';
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <h4 class='font-black text-orange-600 text-sm'>${item.data.resep1.nama}</h4>
+                            <span class='text-[9px] text-gray-400'>${dateStr}</span>
+                        </div>
+                        <p class='text-[10px] opacity-50 truncate mt-1'>${item.bahan}</p>
+                    `;
+                    // Fitur klik history untuk load kembali
+                    div.onclick = () => {
+                         renderRecipe('recipe-1', item.data.resep1, 'orange');
+                         renderRecipe('recipe-2', item.data.resep2, 'red');
+                         document.getElementById('results-container').classList.remove('hidden');
+                         document.getElementById('btn-print').classList.remove('hidden');
+                         window.scrollTo({ top: document.getElementById('results-container').offsetTop - 80, behavior: 'smooth' });
+                    };
+                    list.appendChild(div);
+                });
+            } catch (err) {
+                list.innerHTML = `<p class='col-span-2 text-center text-red-500 py-4'>Gagal memuat: ${err.message}</p>`;
+            }
         };
     </script>
 
@@ -218,10 +292,15 @@
         const toggleSettings = () => document.getElementById('settings-modal').classList.toggle('hidden');
         
         const saveSettings = () => {
-            localStorage.setItem('gemini_api_key', document.getElementById('api-key-input').value.trim());
-            localStorage.setItem('gemini_selected_model', document.getElementById('model-input').value.trim());
-            localStorage.setItem('firebase_config', document.getElementById('firebase-config').value.trim());
-            alert("Pengaturan Berhasil Disimpan!");
+            const apiKey = document.getElementById('api-key-input').value.trim();
+            const model = document.getElementById('model-input').value.trim();
+
+            localStorage.setItem('gemini_api_key', apiKey);
+            localStorage.setItem('gemini_selected_model', model);
+            
+            // Kita tidak perlu menyimpan config firebase lagi karena sudah di hardcode
+
+            alert("Pengaturan Berhasil Disimpan! Halaman akan dimuat ulang.");
             location.reload();
         };
 
@@ -250,7 +329,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('api-key-input').value = localStorage.getItem('gemini_api_key') || "";
             document.getElementById('model-input').value = localStorage.getItem('gemini_selected_model') || "gemini-2.0-flash-exp";
-            document.getElementById('firebase-config').value = localStorage.getItem('firebase_config') || "";
         });
     </script>
 </body>
