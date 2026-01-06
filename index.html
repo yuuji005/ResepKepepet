@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="id" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resep Kepepet AI - Settings Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <style>
+        .loader { border-top-color: #0b0781; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+    </style>
+</head>
+<body class="bg-orange-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300">
+
+    <div class="max-w-2xl mx-auto p-6">
+        <nav class="flex justify-between items-center mb-10 animate__animated animate__fadeInDown">
+            <h1 class="text-2xl font-bold text-orange-600 flex items-center gap-2">
+                <span>🍳</span> ResepKepepet
+            </h1>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleDarkMode()" class="p-2 bg-white dark:bg-gray-800 shadow rounded-full hover:scale-110 transition">
+                    <span id="theme-icon">🌙</span>
+                </button>
+                <button onclick="toggleSettings()" class="p-2 bg-white dark:bg-gray-800 shadow rounded-full hover:scale-110 transition">
+                    <span>⚙️</span>
+                </button>
+                <div id="google_btn"></div>
+            </div>
+        </nav>
+
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl animate__animated animate__zoomIn">
+            <h2 class="text-xl font-bold mb-4">Mau masak apa hari ini?</h2>
+            <p class="text-sm text-gray-500 mb-4 italic">*Pastikan API Key sudah diisi di menu Pengaturan (⚙️)</p>
+            <textarea id="ingredients" class="w-full p-4 border rounded-xl bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-orange-400 outline-none transition" 
+                rows="3" placeholder="Contoh: Tempe, santan, cabai..."></textarea>
+            
+            <button onclick="generateRecipe()" id="btn-generate" 
+                class="w-full mt-4 bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-xl shadow-lg transform active:scale-95 transition-all">
+                Cari Ide Resep
+            </button>
+        </div>
+
+        <div id="loading" class="hidden flex flex-col items-center mt-12 animate__animated animate__pulse animate__infinite">
+            <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-14 w-14 mb-4"></div>
+            <p class="text-orange-500 font-medium">Menghubungi Chef Gemini...</p>
+        </div>
+
+        <div id="recipe-result" class="mt-8 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl hidden animate__animated animate__fadeInUp border-t-8 border-orange-500"></div>
+    </div>
+
+    <div id="settings-modal" class="fixed inset-0 modal-overlay hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl shadow-2xl p-6 animate__animated animate__bounceIn">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Pengaturan API</h3>
+                <button onclick="toggleSettings()" class="text-gray-500 hover:text-black dark:hover:text-white">✕</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Gemini API Key</label>
+                    <input type="password" id="api-key-input" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-orange-500 outline-none" placeholder="Masukkan AI Studio Key...">
+                    <p class="text-[10px] mt-1 text-gray-400 italic">Key disimpan di browser Anda (LocalStorage).</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Google Client ID (Opsional)</label>
+                    <input type="text" id="client-id-input" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-orange-500 outline-none" placeholder="xxxx-xxxx.apps.googleusercontent.com">
+                </div>
+                <button onclick="saveSettings()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg transition">
+                    Simpan Perubahan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+
+        // Load Settings on Start
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedKey = localStorage.getItem('gemini_api_key');
+            const savedClient = localStorage.getItem('google_client_id');
+            if (savedKey) document.getElementById('api-key-input').value = savedKey;
+            if (savedClient) document.getElementById('client-id-input').value = savedClient;
+        });
+
+        // UI Functions
+        window.toggleSettings = () => {
+            document.getElementById('settings-modal').classList.toggle('hidden');
+        };
+
+        window.toggleDarkMode = () => {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            document.getElementById('theme-icon').innerText = isDark ? '☀️' : '🌙';
+        };
+
+        window.saveSettings = () => {
+            const key = document.getElementById('api-key-input').value;
+            const client = document.getElementById('client-id-input').value;
+            localStorage.setItem('gemini_api_key', key);
+            localStorage.setItem('google_client_id', client);
+            alert("Pengaturan disimpan!");
+            toggleSettings();
+            if(client) location.reload(); // Reload untuk inisialisasi login google
+        };
+
+        // Core AI Function
+        window.generateRecipe = async () => {
+            const apiKey = localStorage.getItem('gemini_api_key');
+            const ingredients = document.getElementById('ingredients').value;
+            
+            if (!apiKey) {
+                alert("Silakan isi API Key di menu pengaturan (ikon gerigi) terlebih dahulu!");
+                return toggleSettings();
+            }
+            if (!ingredients) return alert("Masukkan bahan yang kamu punya!");
+
+            const resultDiv = document.getElementById('recipe-result');
+            const loading = document.getElementById('loading');
+            const btn = document.getElementById('btn-generate');
+
+            loading.classList.remove('hidden');
+            resultDiv.classList.add('hidden');
+            btn.disabled = true;
+
+            try {
+                const genAI = new GoogleGenerativeAI(apiKey);
+                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                
+                const prompt = `Berikan resep masakan kreatif dari bahan: ${ingredients}. 
+                Format harus menarik dengan:
+                - Judul (huruf besar)
+                - Bahan-bahan (list)
+                - Cara masak (nomor urut)
+                Gunakan bahasa Indonesia yang ramah.`;
+
+                const result = await model.generateContent(prompt);
+                const response = await result.response;
+                const htmlContent = response.text()
+                    .replace(/\n/g, '<br>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+                resultDiv.innerHTML = `<h2 class="text-2xl font-bold mb-4 text-orange-600">Hasil Racikan AI:</h2>` + htmlContent;
+                resultDiv.classList.remove('hidden');
+            } catch (error) {
+                console.error(error);
+                alert("Error: Pastikan API Key benar dan internet lancar.");
+            } finally {
+                loading.classList.add('hidden');
+                btn.disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>
