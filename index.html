@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ResepKepepet v2.5 - Cloud & Print</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
@@ -13,14 +13,29 @@
         
         /* Font size 16px standar Word & Padding Lega */
         .recipe-text { font-size: 16px; line-height: 1.7; }
+        
+        /* Optimasi Card untuk Mobile (Padding lebih dinamis) */
         .recipe-card { 
-            padding: 2.5rem !important; 
+            padding: 1.5rem !important; /* Mobile padding */
             transition: all 0.3s ease;
-            min-height: 400px;
+            min-height: auto;
         }
+        
+        @media (min-width: 768px) {
+            .recipe-card { 
+                padding: 2.5rem !important; /* Desktop padding */
+                min-height: 400px;
+            }
+        }
+
         .recipe-card:hover { transform: translateY(-5px); }
 
-        .glass-nav { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+        /* Glassmorphism Navigation Sticky untuk Mobile */
+        .glass-nav { 
+            background: rgba(255, 255, 255, 0.8); 
+            backdrop-filter: blur(10px); 
+            -webkit-backdrop-filter: blur(10px);
+        }
 
         /* Logika Cetak (Print) */
         @media print {
@@ -41,70 +56,73 @@
             }
             .dark { background: white !important; color: black !important; }
         }
+
+        /* Menghilangkan highlight biru saat tap di mobile */
+        * { -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen font-sans transition-colors">
 
-    <div class="max-w-5xl mx-auto p-4 md:p-8">
-        <nav class="sticky top-4 z-40 flex justify-between items-center mb-8 p-4 rounded-2xl shadow-lg glass-nav dark:bg-gray-800/80 border border-white/20">
-            <h1 class="text-2xl font-black text-orange-600 flex items-center gap-2 italic">
-                🍳 ResepKepepet <span class="text-[10px] bg-orange-600 text-white px-2 py-1 rounded-md not-italic uppercase tracking-widest">v2.5 Cloud</span>
+    <div class="max-w-5xl mx-auto p-4 md:p-8 pb-12">
+        <nav class="sticky top-2 z-40 flex justify-between items-center mb-6 p-3 md:p-4 rounded-2xl shadow-lg glass-nav dark:bg-gray-800/80 border border-white/20">
+            <h1 class="text-xl md:text-2xl font-black text-orange-600 flex items-center gap-2 italic">
+                🍳 ResepKepepet<span class="hidden xs:inline">ResepKepepet</span> <span class="text-[9px] md:text-[10px] bg-orange-600 text-white px-2 py-1 rounded-md not-italic uppercase tracking-widest">v2.5</span>
             </h1>
             <div class="flex gap-2">
-                <button onclick="toggleHistory()" class="history-btn px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-200 rounded-xl font-bold text-sm">📜 Riwayat</button>
-                <button onclick="toggleSettings()" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-xl hover:rotate-90 transition-transform">⚙️</button>
+                <button onclick="toggleHistory()" class="history-btn px-3 py-2 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-200 rounded-xl font-bold text-xs md:text-sm active:scale-95 transition-transform">📜 Riwayat</button>
+                <button onclick="toggleSettings()" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-xl hover:rotate-90 active:scale-95 transition-transform">⚙️</button>
             </div>
         </nav>
 
-        <div id="input-section" class="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-2xl mb-10 border border-slate-100 dark:border-gray-700 animate__animated animate__fadeInDown">
-            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">🛒 Bahan yang tersedia:</h2>
-            <textarea id="ingredients" class="w-full p-6 rounded-2xl bg-slate-50 dark:bg-gray-700 border-2 border-slate-100 dark:border-gray-600 focus:border-orange-500 outline-none transition-all text-lg mb-6" 
+        <div id="input-section" class="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl mb-8 border border-slate-100 dark:border-gray-700 animate__animated animate__fadeInDown">
+            <h2 class="text-lg md:text-xl font-bold mb-4 flex items-center gap-2">🛒 Bahan yang tersedia:</h2>
+            <textarea id="ingredients" class="w-full p-4 md:p-6 rounded-2xl bg-slate-50 dark:bg-gray-700 border-2 border-slate-100 dark:border-gray-600 focus:border-orange-500 outline-none transition-all text-base md:text-lg mb-6" 
                 rows="3" placeholder="Contoh: Tempe, Telur, Bawang Merah..."></textarea>
             
             <button onclick="generateRecipe()" id="btn-generate" 
-                class="w-full bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-black py-5 rounded-2xl shadow-xl transform active:scale-95 transition-all text-lg tracking-widest">
-                🪄 RACIK & SIMPAN KE CLOUD
+                class="w-full bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-black py-4 md:py-5 rounded-2xl shadow-xl transform active:scale-95 transition-all text-base md:text-lg tracking-widest uppercase">
+                🪄 RACIK & SIMPAN CLOUD
             </button>
         </div>
 
-        <div id="loading" class="hidden text-center py-20">
-            <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-20 w-20 mx-auto mb-6"></div>
-            <p class="text-2xl font-bold text-orange-600 animate-pulse italic">Chef AI sedang meracik resep...</p>
+        <div id="loading" class="hidden text-center py-12 md:py-20">
+            <div class="loader ease-linear rounded-full border-4 md:border-8 border-t-4 md:border-t-8 border-gray-200 h-12 w-12 md:h-20 md:w-20 mx-auto mb-6"></div>
+            <p class="text-xl md:text-2xl font-bold text-orange-600 animate-pulse italic">Chef AI sedang meracik...</p>
         </div>
 
-        <div id="results-container" class="grid grid-cols-1 md:grid-cols-2 gap-8 hidden">
-            <div id="recipe-1" class="recipe-card bg-white dark:bg-gray-800 rounded-[2rem] shadow-xl border-t-[12px] border-orange-500 animate__animated animate__fadeInLeft"></div>
-            <div id="recipe-2" class="recipe-card bg-white dark:bg-gray-800 rounded-[2rem] shadow-xl border-t-[12px] border-red-500 animate__animated animate__fadeInRight"></div>
+        <div id="results-container" class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 hidden">
+            <div id="recipe-1" class="recipe-card bg-white dark:bg-gray-800 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border-t-[8px] md:border-t-[12px] border-orange-500 animate__animated animate__fadeInUp"></div>
+            <div id="recipe-2" class="recipe-card bg-white dark:bg-gray-800 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border-t-[8px] md:border-t-[12px] border-red-500 animate__animated animate__fadeInUp"></div>
         </div>
 
-        <button id="btn-print" onclick="window.print()" class="hidden w-full mt-8 bg-gray-800 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-gray-900 transition-all flex justify-center items-center gap-2">
-            🖨️ CETAK RESEP (PDF/KERTAS)
+        <button id="btn-print" onclick="window.print()" class="hidden w-full mt-6 bg-gray-800 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-all flex justify-center items-center gap-2">
+            🖨️ CETAK (PDF / KERTAS)
         </button>
 
-        <div id="history-container" class="mt-12 hidden animate__animated animate__fadeInUp">
-            <h3 class="text-2xl font-black mb-6 flex items-center gap-2 text-blue-600 italic">☁️ Cloud History</h3>
+        <div id="history-container" class="mt-10 hidden animate__animated animate__fadeInUp">
+            <h3 class="text-xl md:text-2xl font-black mb-6 flex items-center gap-2 text-blue-600 italic px-2">☁️ Cloud History</h3>
             <div id="history-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
     </div>
 
-    <div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden p-4">
-        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2rem] p-8 shadow-2xl animate__animated animate__zoomIn max-h-[90vh] overflow-y-auto">
-            <h3 class="text-2xl font-black mb-6 text-orange-600 italic">Kitchen Settings</h3>
-            <div class="space-y-5">
+    <div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden p-2 md:p-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-8 shadow-2xl animate__animated animate__zoomIn max-h-[95vh] overflow-y-auto">
+            <h3 class="text-xl md:text-2xl font-black mb-6 text-orange-600 italic">Kitchen Settings</h3>
+            <div class="space-y-4 md:space-y-5">
                 <div>
-                    <label class="block text-xs font-bold mb-2 uppercase opacity-50">Gemini API Key</label>
-                    <input type="password" id="api-key-input" class="w-full p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600" placeholder="Paste API Key...">
+                    <label class="block text-[10px] font-bold mb-1 md:mb-2 uppercase opacity-50">Gemini API Key</label>
+                    <input type="password" id="api-key-input" class="w-full p-3 md:p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600 text-sm" placeholder="Paste API Key...">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold mb-2 uppercase opacity-50">Model ID</label>
-                    <input type="text" id="model-input" class="w-full p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600 font-mono text-sm" placeholder="gemini-2.0-flash-exp">
+                    <label class="block text-[10px] font-bold mb-1 md:mb-2 uppercase opacity-50">Model ID</label>
+                    <input type="text" id="model-input" class="w-full p-3 md:p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600 font-mono text-sm" placeholder="gemini-2.0-flash-exp">
                 </div>
                 <div class="pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <label class="block text-xs font-bold mb-2 uppercase text-blue-500">Firebase Configuration (JSON)</label>
-                    <textarea id="firebase-config" class="w-full p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600 font-mono text-[10px]" rows="6" placeholder='{ "apiKey": "...", "projectId": "..." }'></textarea>
+                    <label class="block text-[10px] font-bold mb-1 md:mb-2 uppercase text-blue-500">Firebase Config (JSON)</label>
+                    <textarea id="firebase-config" class="w-full p-3 md:p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600 font-mono text-[10px]" rows="6" placeholder='{ "apiKey": "...", "projectId": "..." }'></textarea>
                 </div>
-                <button onclick="saveSettings()" class="w-full bg-orange-600 text-white font-black py-4 rounded-xl hover:bg-orange-700 transition shadow-lg">SIMPAN KONFIGURASI</button>
-                <button onclick="toggleSettings()" class="w-full text-sm text-gray-400 font-bold uppercase py-2">Tutup</button>
+                <button onclick="saveSettings()" class="w-full bg-orange-600 text-white font-black py-4 rounded-xl active:scale-95 transition shadow-lg">SIMPAN</button>
+                <button onclick="toggleSettings()" class="w-full text-xs text-gray-400 font-bold uppercase py-2">Tutup</button>
             </div>
         </div>
     </div>
@@ -156,7 +174,7 @@
 
                 results.classList.remove('hidden');
                 btnPrint.classList.remove('hidden');
-                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                confetti({ particleCount: 100, spread: 60, origin: { y: 0.8 } });
 
                 if (db) {
                     await addDoc(collection(db, "recipes"), {
@@ -165,6 +183,10 @@
                         date: new Date()
                     });
                 }
+                
+                // Auto scroll ke hasil di mobile
+                window.scrollTo({ top: results.offsetTop - 80, behavior: 'smooth' });
+
             } catch (e) { alert("Error: " + e.message); }
             finally { loading.classList.add('hidden'); }
         };
@@ -177,7 +199,7 @@
             if (!db) return alert("Konfigurasi Firebase belum diisi!");
             if (container.classList.contains('hidden')) return;
 
-            list.innerHTML = "<p class='col-span-2 text-center animate-pulse'>Mengambil data cloud...</p>";
+            list.innerHTML = "<p class='col-span-2 text-center animate-pulse py-4'>Mengambil data cloud...</p>";
             const q = query(collection(db, "recipes"), orderBy("date", "desc"), limit(6));
             const snap = await getDocs(q);
             
@@ -185,8 +207,8 @@
             snap.forEach(doc => {
                 const item = doc.data();
                 const div = document.createElement('div');
-                div.className = "bg-white dark:bg-gray-800 p-6 rounded-2xl shadow border-l-8 border-blue-500";
-                div.innerHTML = `<h4 class='font-black text-orange-600'>${item.data.resep1.nama}</h4><p class='text-xs opacity-50 truncate'>${item.bahan}</p>`;
+                div.className = "bg-white dark:bg-gray-800 p-4 rounded-xl shadow border-l-8 border-blue-500 mx-2";
+                div.innerHTML = `<h4 class='font-black text-orange-600 text-sm'>${item.data.resep1.nama}</h4><p class='text-[10px] opacity-50 truncate'>${item.bahan}</p>`;
                 list.appendChild(div);
             });
         };
@@ -205,27 +227,26 @@
 
         function renderRecipe(id, data, color) {
             document.getElementById(id).innerHTML = `
-                <h2 class="text-3xl font-black text-${color}-600 mb-6 italic uppercase tracking-tighter line-height-1">
+                <h2 class="text-2xl md:text-3xl font-black text-${color}-600 mb-4 md:mb-6 italic uppercase tracking-tighter leading-tight">
                     ${data.nama}
                 </h2>
                 
-                <div class="mb-8">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">⚠️ Bahan Tambahan:</h4>
+                <div class="mb-6 md:mb-8">
+                    <h4 class="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">⚠️ Bahan Tambahan:</h4>
                     <div class="flex flex-wrap gap-2">
-                        ${data.bahan_kurang.map(b => `<span class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm px-4 py-1.5 rounded-full font-bold border border-red-100 dark:border-red-800">+ ${b}</span>`).join('')}
+                        ${data.bahan_kurang.map(b => `<span class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs px-3 py-1 rounded-full font-bold border border-red-100 dark:border-red-800">+ ${b}</span>`).join('')}
                     </div>
                 </div>
 
                 <div class="recipe-text">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">👨‍🍳 Langkah Memasak:</h4>
-                    <ol class="list-decimal list-outside ml-6 space-y-4 text-gray-700 dark:text-gray-300">
+                    <h4 class="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">👨‍🍳 Langkah Memasak:</h4>
+                    <ol class="list-decimal list-outside ml-5 md:ml-6 space-y-3 md:space-y-4 text-gray-700 dark:text-gray-300">
                         ${data.cara_masak.map(step => `<li>${step}</li>`).join('')}
                     </ol>
                 </div>
             `;
         }
 
-        // Auto-load settings
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('api-key-input').value = localStorage.getItem('gemini_api_key') || "";
             document.getElementById('model-input').value = localStorage.getItem('gemini_selected_model') || "gemini-2.0-flash-exp";
