@@ -1,159 +1,236 @@
 <!DOCTYPE html>
-<html lang="id" class="">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resep Kepepet AI - Settings Edition</title>
+    <title>ResepKepepet v2.5 - Cloud & Print</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-    <script>
-        tailwind.config = { darkMode: 'class' }
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        .loader { border-top-color: #0b0781; animation: spin 1s linear infinite; }
+        .loader { border-top-color: #f97316; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        
+        /* Font size 16px standar Word & Padding Lega */
+        .recipe-text { font-size: 16px; line-height: 1.7; }
+        .recipe-card { 
+            padding: 2.5rem !important; 
+            transition: all 0.3s ease;
+            min-height: 400px;
+        }
+        .recipe-card:hover { transform: translateY(-5px); }
+
+        .glass-nav { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+
+        /* Logika Cetak (Print) */
+        @media print {
+            body { background: white !important; }
+            nav, #input-section, #btn-print, #settings-modal, .history-btn { display: none !important; }
+            #results-container { 
+                display: block !important; 
+                position: absolute; 
+                top: 0; 
+                width: 100%; 
+            }
+            .recipe-card { 
+                border: 2px solid #eee !important; 
+                margin-bottom: 30px; 
+                break-inside: avoid; 
+                color: black !important;
+                box-shadow: none !important;
+            }
+            .dark { background: white !important; color: black !important; }
+        }
     </style>
 </head>
-<body class="bg-orange-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300">
+<body class="bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen font-sans transition-colors">
 
-    <div class="max-w-2xl mx-auto p-6">
-        <nav class="flex justify-between items-center mb-10 animate__animated animate__fadeInDown">
-            <h1 class="text-2xl font-bold text-orange-600 flex items-center gap-2">
-                <span>🍳</span> ResepKepepet
+    <div class="max-w-5xl mx-auto p-4 md:p-8">
+        <nav class="sticky top-4 z-40 flex justify-between items-center mb-8 p-4 rounded-2xl shadow-lg glass-nav dark:bg-gray-800/80 border border-white/20">
+            <h1 class="text-2xl font-black text-orange-600 flex items-center gap-2 italic">
+                🍳 ResepKepepet <span class="text-[10px] bg-orange-600 text-white px-2 py-1 rounded-md not-italic uppercase tracking-widest">v2.5 Cloud</span>
             </h1>
-            <div class="flex items-center gap-3">
-                <button onclick="toggleDarkMode()" class="p-2 bg-white dark:bg-gray-800 shadow rounded-full hover:scale-110 transition">
-                    <span id="theme-icon">🌙</span>
-                </button>
-                <button onclick="toggleSettings()" class="p-2 bg-white dark:bg-gray-800 shadow rounded-full hover:scale-110 transition">
-                    <span>⚙️</span>
-                </button>
-                <div id="google_btn"></div>
+            <div class="flex gap-2">
+                <button onclick="toggleHistory()" class="history-btn px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-200 rounded-xl font-bold text-sm">📜 Riwayat</button>
+                <button onclick="toggleSettings()" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-xl hover:rotate-90 transition-transform">⚙️</button>
             </div>
         </nav>
 
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl animate__animated animate__zoomIn">
-            <h2 class="text-xl font-bold mb-4">Mau masak apa hari ini?</h2>
-            <p class="text-sm text-gray-500 mb-4 italic">*Pastikan API Key sudah diisi di menu Pengaturan (⚙️)</p>
-            <textarea id="ingredients" class="w-full p-4 border rounded-xl bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-orange-400 outline-none transition" 
-                rows="3" placeholder="Contoh: Tempe, santan, cabai..."></textarea>
+        <div id="input-section" class="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-2xl mb-10 border border-slate-100 dark:border-gray-700 animate__animated animate__fadeInDown">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">🛒 Bahan yang tersedia:</h2>
+            <textarea id="ingredients" class="w-full p-6 rounded-2xl bg-slate-50 dark:bg-gray-700 border-2 border-slate-100 dark:border-gray-600 focus:border-orange-500 outline-none transition-all text-lg mb-6" 
+                rows="3" placeholder="Contoh: Tempe, Telur, Bawang Merah..."></textarea>
             
             <button onclick="generateRecipe()" id="btn-generate" 
-                class="w-full mt-4 bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-xl shadow-lg transform active:scale-95 transition-all">
-                Cari Ide Resep
+                class="w-full bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-black py-5 rounded-2xl shadow-xl transform active:scale-95 transition-all text-lg tracking-widest">
+                🪄 RACIK & SIMPAN KE CLOUD
             </button>
         </div>
 
-        <div id="loading" class="hidden flex flex-col items-center mt-12 animate__animated animate__pulse animate__infinite">
-            <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-14 w-14 mb-4"></div>
-            <p class="text-orange-500 font-medium">Menghubungi Chef Gemini...</p>
+        <div id="loading" class="hidden text-center py-20">
+            <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-20 w-20 mx-auto mb-6"></div>
+            <p class="text-2xl font-bold text-orange-600 animate-pulse italic">Chef AI sedang meracik resep...</p>
         </div>
 
-        <div id="recipe-result" class="mt-8 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl hidden animate__animated animate__fadeInUp border-t-8 border-orange-500"></div>
+        <div id="results-container" class="grid grid-cols-1 md:grid-cols-2 gap-8 hidden">
+            <div id="recipe-1" class="recipe-card bg-white dark:bg-gray-800 rounded-[2rem] shadow-xl border-t-[12px] border-orange-500 animate__animated animate__fadeInLeft"></div>
+            <div id="recipe-2" class="recipe-card bg-white dark:bg-gray-800 rounded-[2rem] shadow-xl border-t-[12px] border-red-500 animate__animated animate__fadeInRight"></div>
+        </div>
+
+        <button id="btn-print" onclick="window.print()" class="hidden w-full mt-8 bg-gray-800 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-gray-900 transition-all flex justify-center items-center gap-2">
+            🖨️ CETAK RESEP (PDF/KERTAS)
+        </button>
+
+        <div id="history-container" class="mt-12 hidden animate__animated animate__fadeInUp">
+            <h3 class="text-2xl font-black mb-6 flex items-center gap-2 text-blue-600 italic">☁️ Cloud History</h3>
+            <div id="history-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
     </div>
 
-    <div id="settings-modal" class="fixed inset-0 modal-overlay hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl shadow-2xl p-6 animate__animated animate__bounceIn">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold">Pengaturan API</h3>
-                <button onclick="toggleSettings()" class="text-gray-500 hover:text-black dark:hover:text-white">✕</button>
-            </div>
-            <div class="space-y-4">
+    <div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden p-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2rem] p-8 shadow-2xl animate__animated animate__zoomIn max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-black mb-6 text-orange-600 italic">Kitchen Settings</h3>
+            <div class="space-y-5">
                 <div>
-                    <label class="block text-sm font-medium mb-1">Gemini API Key</label>
-                    <input type="password" id="api-key-input" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-orange-500 outline-none" placeholder="Masukkan AI Studio Key...">
-                    <p class="text-[10px] mt-1 text-gray-400 italic">Key disimpan di browser Anda (LocalStorage).</p>
+                    <label class="block text-xs font-bold mb-2 uppercase opacity-50">Gemini API Key</label>
+                    <input type="password" id="api-key-input" class="w-full p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600" placeholder="Paste API Key...">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium mb-1">Google Client ID (Opsional)</label>
-                    <input type="text" id="client-id-input" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-orange-500 outline-none" placeholder="xxxx-xxxx.apps.googleusercontent.com">
+                    <label class="block text-xs font-bold mb-2 uppercase opacity-50">Model ID</label>
+                    <input type="text" id="model-input" class="w-full p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600 font-mono text-sm" placeholder="gemini-2.0-flash-exp">
                 </div>
-                <button onclick="saveSettings()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg transition">
-                    Simpan Perubahan
-                </button>
+                <div class="pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <label class="block text-xs font-bold mb-2 uppercase text-blue-500">Firebase Configuration (JSON)</label>
+                    <textarea id="firebase-config" class="w-full p-4 rounded-xl border dark:bg-gray-700 dark:border-gray-600 font-mono text-[10px]" rows="6" placeholder='{ "apiKey": "...", "projectId": "..." }'></textarea>
+                </div>
+                <button onclick="saveSettings()" class="w-full bg-orange-600 text-white font-black py-4 rounded-xl hover:bg-orange-700 transition shadow-lg">SIMPAN KONFIGURASI</button>
+                <button onclick="toggleSettings()" class="w-full text-sm text-gray-400 font-bold uppercase py-2">Tutup</button>
             </div>
         </div>
     </div>
 
     <script type="module">
-        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        // Load Settings on Start
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedKey = localStorage.getItem('gemini_api_key');
-            const savedClient = localStorage.getItem('google_client_id');
-            if (savedKey) document.getElementById('api-key-input').value = savedKey;
-            if (savedClient) document.getElementById('client-id-input').value = savedClient;
-        });
+        let db;
+        const configRaw = localStorage.getItem('firebase_config');
+        if (configRaw) {
+            try {
+                const app = initializeApp(JSON.parse(configRaw));
+                db = getFirestore(app);
+            } catch (e) { console.error("Firebase Error:", e); }
+        }
 
-        // UI Functions
-        window.toggleSettings = () => {
-            document.getElementById('settings-modal').classList.toggle('hidden');
-        };
-
-        window.toggleDarkMode = () => {
-            document.documentElement.classList.toggle('dark');
-            const isDark = document.documentElement.classList.contains('dark');
-            document.getElementById('theme-icon').innerText = isDark ? '☀️' : '🌙';
-        };
-
-        window.saveSettings = () => {
-            const key = document.getElementById('api-key-input').value;
-            const client = document.getElementById('client-id-input').value;
-            localStorage.setItem('gemini_api_key', key);
-            localStorage.setItem('google_client_id', client);
-            alert("Pengaturan disimpan!");
-            toggleSettings();
-            if(client) location.reload(); // Reload untuk inisialisasi login google
-        };
-
-        // Core AI Function
         window.generateRecipe = async () => {
-            const apiKey = localStorage.getItem('gemini_api_key');
-            const ingredients = document.getElementById('ingredients').value;
-            
-            if (!apiKey) {
-                alert("Silakan isi API Key di menu pengaturan (ikon gerigi) terlebih dahulu!");
-                return toggleSettings();
-            }
-            if (!ingredients) return alert("Masukkan bahan yang kamu punya!");
+            const key = localStorage.getItem('gemini_api_key');
+            const model = localStorage.getItem('gemini_selected_model') || "gemini-1.5-flash";
+            const bahan = document.getElementById('ingredients').value;
 
-            const resultDiv = document.getElementById('recipe-result');
+            if (!key || !bahan) return alert("Lengkapi API Key dan Bahan!");
+
             const loading = document.getElementById('loading');
-            const btn = document.getElementById('btn-generate');
+            const results = document.getElementById('results-container');
+            const btnPrint = document.getElementById('btn-print');
 
             loading.classList.remove('hidden');
-            resultDiv.classList.add('hidden');
-            btn.disabled = true;
+            results.classList.add('hidden');
+            btnPrint.classList.add('hidden');
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+            const prompt = `Bahan: ${bahan}. Berikan 2 resep dalam JSON: {"resep1": {"nama": "", "bahan_kurang": [], "cara_masak": []}, "resep2": {"nama": "", "bahan_kurang": [], "cara_masak": []}}. Gunakan font size 16px feeling dalam deskripsi cara masak.`;
 
             try {
-                const genAI = new GoogleGenerativeAI(apiKey);
-                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-                
-                const prompt = `Berikan resep masakan kreatif dari bahan: ${ingredients}. 
-                Format harus menarik dengan:
-                - Judul (huruf besar)
-                - Bahan-bahan (list)
-                - Cara masak (nomor urut)
-                Gunakan bahasa Indonesia yang ramah.`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
 
-                const result = await model.generateContent(prompt);
-                const response = await result.response;
-                const htmlContent = response.text()
-                    .replace(/\n/g, '<br>')
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                const data = await response.json();
+                const rawText = data.candidates[0].content.parts[0].text;
+                const cleanJson = JSON.parse(rawText.replace(/```json|```/g, ''));
 
-                resultDiv.innerHTML = `<h2 class="text-2xl font-bold mb-4 text-orange-600">Hasil Racikan AI:</h2>` + htmlContent;
-                resultDiv.classList.remove('hidden');
-            } catch (error) {
-                console.error(error);
-                alert("Error: Pastikan API Key benar dan internet lancar.");
-            } finally {
-                loading.classList.add('hidden');
-                btn.disabled = false;
-            }
+                renderRecipe('recipe-1', cleanJson.resep1, 'orange');
+                renderRecipe('recipe-2', cleanJson.resep2, 'red');
+
+                results.classList.remove('hidden');
+                btnPrint.classList.remove('hidden');
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+
+                if (db) {
+                    await addDoc(collection(db, "recipes"), {
+                        bahan: bahan,
+                        data: cleanJson,
+                        date: new Date()
+                    });
+                }
+            } catch (e) { alert("Error: " + e.message); }
+            finally { loading.classList.add('hidden'); }
         };
+
+        window.toggleHistory = async () => {
+            const container = document.getElementById('history-container');
+            const list = document.getElementById('history-list');
+            container.classList.toggle('hidden');
+
+            if (!db) return alert("Konfigurasi Firebase belum diisi!");
+            if (container.classList.contains('hidden')) return;
+
+            list.innerHTML = "<p class='col-span-2 text-center animate-pulse'>Mengambil data cloud...</p>";
+            const q = query(collection(db, "recipes"), orderBy("date", "desc"), limit(6));
+            const snap = await getDocs(q);
+            
+            list.innerHTML = "";
+            snap.forEach(doc => {
+                const item = doc.data();
+                const div = document.createElement('div');
+                div.className = "bg-white dark:bg-gray-800 p-6 rounded-2xl shadow border-l-8 border-blue-500";
+                div.innerHTML = `<h4 class='font-black text-orange-600'>${item.data.resep1.nama}</h4><p class='text-xs opacity-50 truncate'>${item.bahan}</p>`;
+                list.appendChild(div);
+            });
+        };
+    </script>
+
+    <script>
+        const toggleSettings = () => document.getElementById('settings-modal').classList.toggle('hidden');
+        
+        const saveSettings = () => {
+            localStorage.setItem('gemini_api_key', document.getElementById('api-key-input').value.trim());
+            localStorage.setItem('gemini_selected_model', document.getElementById('model-input').value.trim());
+            localStorage.setItem('firebase_config', document.getElementById('firebase-config').value.trim());
+            alert("Pengaturan Berhasil Disimpan!");
+            location.reload();
+        };
+
+        function renderRecipe(id, data, color) {
+            document.getElementById(id).innerHTML = `
+                <h2 class="text-3xl font-black text-${color}-600 mb-6 italic uppercase tracking-tighter line-height-1">
+                    ${data.nama}
+                </h2>
+                
+                <div class="mb-8">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">⚠️ Bahan Tambahan:</h4>
+                    <div class="flex flex-wrap gap-2">
+                        ${data.bahan_kurang.map(b => `<span class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm px-4 py-1.5 rounded-full font-bold border border-red-100 dark:border-red-800">+ ${b}</span>`).join('')}
+                    </div>
+                </div>
+
+                <div class="recipe-text">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">👨‍🍳 Langkah Memasak:</h4>
+                    <ol class="list-decimal list-outside ml-6 space-y-4 text-gray-700 dark:text-gray-300">
+                        ${data.cara_masak.map(step => `<li>${step}</li>`).join('')}
+                    </ol>
+                </div>
+            `;
+        }
+
+        // Auto-load settings
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('api-key-input').value = localStorage.getItem('gemini_api_key') || "";
+            document.getElementById('model-input').value = localStorage.getItem('gemini_selected_model') || "gemini-2.0-flash-exp";
+            document.getElementById('firebase-config').value = localStorage.getItem('firebase_config') || "";
+        });
     </script>
 </body>
 </html>
