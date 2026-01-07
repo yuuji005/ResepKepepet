@@ -100,12 +100,15 @@
         </button>
 
         <div id="history-container" class="mt-10 hidden animate__animated animate__fadeInUp">
-            <h3 class="text-xl md:text-2xl font-black mb-6 flex items-center gap-2 text-blue-600 italic px-2">☁️ Cloud History</h3>
+            <div class="flex justify-between items-center mb-6 px-2">
+                <h3 class="text-xl md:text-2xl font-black text-blue-600 italic">☁️ Cloud History</h3>
+                <button onclick="toggleHistory()" class="text-sm text-gray-400 hover:text-gray-600">Tutup</button>
+            </div>
             <div id="history-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
     </div>
 
-    <!-- SETTINGS MODAL (SUDAH DIUBAH: CONFIG FIREBASE DIHILANGKAN DARI SINI) -->
+    <!-- SETTINGS MODAL -->
     <div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden p-2 md:p-4">
         <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-8 shadow-2xl animate__animated animate__zoomIn max-h-[95vh] overflow-y-auto">
             <h3 class="text-xl md:text-2xl font-black mb-6 text-orange-600 italic">Kitchen Settings</h3>
@@ -120,7 +123,7 @@
                 </div>
                 
                 <p class="text-[10px] text-gray-400 italic mt-2 border-t pt-2 dark:border-gray-600">
-                    * Konfigurasi Firebase kini tertanam di dalam kode sumber (HTML).
+                    * Konfigurasi Firebase tertanam di dalam kode sumber (HTML).
                 </p>
 
                 <button onclick="saveSettings()" class="w-full bg-orange-600 text-white font-black py-4 rounded-xl active:scale-95 transition shadow-lg">SIMPAN</button>
@@ -131,38 +134,57 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        // Menambahkan deleteDoc dan doc
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         // ==========================================
         // --- KONFIGURASI FIREBASE (ISI DI SINI) ---
         // ==========================================
         // Ganti titik-titik di bawah dengan data dari Firebase Console Anda
-       const firebaseConfig = {
-        apiKey: "AIzaSyC67ZMqywH6Nj_Jm5EjStcT4xq_qRv7yB8",
-        authDomain: "kulkas-ai.firebaseapp.com",
-        projectId: "kulkas-ai",
-        storageBucket: "kulkas-ai.firebasestorage.app",
-        messagingSenderId: "364317481294",
-        appId: "1:364317481294:web:d2e69c3b82b54b1d0e661f",
-        measurementId: "G-G4LH0L728M"
+        const firebaseConfig = {
+                apiKey: "AIzaSyC67ZMqywH6Nj_Jm5EjStcT4xq_qRv7yB8",
+            authDomain: "kulkas-ai.firebaseapp.com",
+            projectId: "kulkas-ai",
+            storageBucket: "kulkas-ai.firebasestorage.app",
+            messagingSenderId: "364317481294",
+            appId: "1:364317481294:web:d2e69c3b82b54b1d0e661f",
+            measurementId: "G-G4LH0L728M"
         };
         // ==========================================
 
         let db;
         
-        // Inisialisasi Firebase Langsung dari Kode
         try {
-            // Cek sederhana apakah user sudah mengisi config atau belum
             if (firebaseConfig.apiKey && !firebaseConfig.apiKey.includes(".....")) {
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
-                console.log("🔥 Firebase Connected via Hardcoded Config!");
+                console.log("🔥 Firebase Connected!");
             } else {
                 console.warn("⚠️ Firebase Config belum diisi di dalam script HTML.");
             }
         } catch (e) { 
             console.error("Firebase Init Error:", e); 
         }
+
+        // Fungsi Global untuk Hapus Resep
+        window.deleteRecipe = async (event, docId) => {
+            // Mencegah klik tombol hapus memicu klik pada kartu (stopPropagation)
+            event.stopPropagation();
+            
+            if (!confirm("Yakin ingin menghapus resep ini dari history?")) return;
+
+            try {
+                // Menghapus dokumen berdasarkan ID
+                await deleteDoc(doc(db, "recipes", docId));
+                alert("Resep berhasil dihapus.");
+                // Refresh list
+                const historyContainer = document.getElementById('history-container');
+                historyContainer.classList.add('hidden'); // Reset state
+                toggleHistory(); // Load ulang
+            } catch (e) {
+                alert("Gagal menghapus: " + e.message);
+            }
+        };
 
         window.generateRecipe = async () => {
             const key = localStorage.getItem('gemini_api_key');
@@ -171,7 +193,7 @@
 
             if (!key || !bahan) {
                 alert("Mohon lengkapi API Key Gemini dan Bahan makanan!");
-                toggleSettings(); // Buka settings jika belum lengkap
+                toggleSettings(); 
                 return;
             }
 
@@ -198,7 +220,6 @@
                 if (!data.candidates) throw new Error("Gagal mengambil data dari AI.");
 
                 const rawText = data.candidates[0].content.parts[0].text;
-                // Bersihkan markdown code block jika ada
                 const cleanJson = JSON.parse(rawText.replace(/```json|```/g, ''));
 
                 renderRecipe('recipe-1', cleanJson.resep1, 'orange');
@@ -208,7 +229,6 @@
                 btnPrint.classList.remove('hidden');
                 confetti({ particleCount: 100, spread: 60, origin: { y: 0.8 } });
 
-                // Simpan ke Firebase jika DB aktif
                 if (db) {
                     try {
                         await addDoc(collection(db, "recipes"), {
@@ -217,11 +237,10 @@
                             date: new Date()
                         });
                     } catch (err) {
-                        console.error("Gagal simpan ke history (Cek Rules/Config):", err);
+                        console.error("Gagal simpan ke history:", err);
                     }
                 }
                 
-                // Auto scroll ke hasil di mobile
                 window.scrollTo({ top: results.offsetTop - 80, behavior: 'smooth' });
 
             } catch (e) { 
@@ -235,7 +254,6 @@
             const container = document.getElementById('history-container');
             const list = document.getElementById('history-list');
             
-            // Toggle visibility
             if (container.classList.contains('hidden')) {
                 container.classList.remove('hidden');
             } else {
@@ -251,6 +269,7 @@
             list.innerHTML = "<p class='col-span-2 text-center animate-pulse py-4'>Mengambil data cloud...</p>";
             
             try {
+                // Ambil data
                 const q = query(collection(db, "recipes"), orderBy("date", "desc"), limit(6));
                 const snap = await getDocs(q);
                 
@@ -259,20 +278,28 @@
                     list.innerHTML = "<p class='col-span-2 text-center text-gray-400 py-4'>Belum ada riwayat resep.</p>";
                 }
 
-                snap.forEach(doc => {
-                    const item = doc.data();
+                snap.forEach(docSnap => {
+                    const item = docSnap.data();
+                    const docId = docSnap.id; // Ambil ID Dokumen untuk keperluan hapus
+                    
                     const div = document.createElement('div');
-                    div.className = "bg-white dark:bg-gray-800 p-4 rounded-xl shadow border-l-8 border-blue-500 mx-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition";
-                    // Tampilkan tanggal simpel
+                    div.className = "bg-white dark:bg-gray-800 p-4 rounded-xl shadow border-l-8 border-blue-500 mx-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition relative group";
                     const dateStr = item.date && item.date.seconds ? new Date(item.date.seconds * 1000).toLocaleDateString('id-ID') : '';
+                    
                     div.innerHTML = `
                         <div class="flex justify-between items-start">
-                            <h4 class='font-black text-orange-600 text-sm'>${item.data.resep1.nama}</h4>
-                            <span class='text-[9px] text-gray-400'>${dateStr}</span>
+                            <h4 class='font-black text-orange-600 text-sm flex-1 mr-2'>${item.data.resep1.nama}</h4>
+                            <div class="flex items-center gap-2">
+                                <span class='text-[9px] text-gray-400'>${dateStr}</span>
+                                <button onclick="deleteRecipe(event, '${docId}')" class="p-1 rounded-md bg-red-100 hover:bg-red-200 text-red-600 transition" title="Hapus Permanen">
+                                    🗑️
+                                </button>
+                            </div>
                         </div>
-                        <p class='text-[10px] opacity-50 truncate mt-1'>${item.bahan}</p>
+                        <p class='text-[10px] opacity-50 truncate mt-1 pr-8'>${item.bahan}</p>
                     `;
-                    // Fitur klik history untuk load kembali
+                    
+                    // Klik card untuk load (stopPropagation di tombol hapus akan mencegah ini jalan saat hapus diklik)
                     div.onclick = () => {
                          renderRecipe('recipe-1', item.data.resep1, 'orange');
                          renderRecipe('recipe-2', item.data.resep2, 'red');
@@ -298,8 +325,6 @@
             localStorage.setItem('gemini_api_key', apiKey);
             localStorage.setItem('gemini_selected_model', model);
             
-            // Kita tidak perlu menyimpan config firebase lagi karena sudah di hardcode
-
             alert("Pengaturan Berhasil Disimpan! Halaman akan dimuat ulang.");
             location.reload();
         };
