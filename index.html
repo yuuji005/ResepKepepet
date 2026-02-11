@@ -11,53 +11,61 @@
         .loader { border-top-color: #f97316; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* Font size 16px standar Word & Padding Lega */
         .recipe-text { font-size: 16px; line-height: 1.7; }
         
-        /* Optimasi Card untuk Mobile (Padding lebih dinamis) */
         .recipe-card { 
-            padding: 1.5rem !important; /* Mobile padding */
+            padding: 1.5rem !important;
             transition: all 0.3s ease;
             min-height: auto;
         }
         
         @media (min-width: 768px) {
             .recipe-card { 
-                padding: 2.5rem !important; /* Desktop padding */
+                padding: 2.5rem !important;
                 min-height: 400px;
             }
         }
 
         .recipe-card:hover { transform: translateY(-5px); }
 
-        /* Glassmorphism Navigation Sticky untuk Mobile */
         .glass-nav { 
             background: rgba(255, 255, 255, 0.8); 
             backdrop-filter: blur(10px); 
             -webkit-backdrop-filter: blur(10px);
         }
 
-        /* Logika Cetak (Print) */
+        /* --- LOGIKA CETAK (PRINT) YANG SUDAH DIPERBAIKI --- */
         @media print {
             body { background: white !important; }
-            nav, #input-section, #btn-print, #settings-modal, .history-btn { display: none !important; }
+            
+            /* Menyembunyikan Nav, Input, Tombol Print, Settings, DAN HISTORY CONTAINER */
+            nav, #input-section, #btn-print, #settings-modal, .history-btn, #history-container { 
+                display: none !important; 
+            }
+
             #results-container { 
                 display: block !important; 
                 position: absolute; 
                 top: 0; 
+                left: 0;
                 width: 100%; 
+                margin: 0;
+                padding: 0;
             }
+            
             .recipe-card { 
                 border: 2px solid #eee !important; 
                 margin-bottom: 30px; 
                 break-inside: avoid; 
                 color: black !important;
                 box-shadow: none !important;
+                page-break-inside: avoid;
             }
+            
             .dark { background: white !important; color: black !important; }
+            .dark .recipe-card { background: white !important; color: black !important; }
         }
 
-        /* Menghilangkan highlight biru saat tap di mobile */
         * { -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
@@ -75,7 +83,7 @@
         </nav>
 
         <div id="input-section" class="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl mb-8 border border-slate-100 dark:border-gray-700 animate__animated animate__fadeInDown">
-            <h2 class="text-lg md:text-xl font-bold mb-4 flex items-center gap-2">🛒 Bahan yang tersedia:</h2>
+            <h2 class="text-lg md:text-xl font-bold mb-4 flex items-center gap-2">🛒 Bahan yang kamu punya:</h2>
             <textarea id="ingredients" class="w-full p-4 md:p-6 rounded-2xl bg-slate-50 dark:bg-gray-700 border-2 border-slate-100 dark:border-gray-600 focus:border-orange-500 outline-none transition-all text-base md:text-lg mb-6" 
                 rows="3" placeholder="Contoh: Tempe, Telur, Bawang Merah..."></textarea>
             
@@ -134,15 +142,13 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        // Menambahkan deleteDoc dan doc
         import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         // ==========================================
-        // --- KONFIGURASI FIREBASE (ISI DI SINI) ---
+        // --- KONFIGURASI FIREBASE ---
         // ==========================================
-        // Ganti titik-titik di bawah dengan data dari Firebase Console Anda
         const firebaseConfig = {
-                apiKey: "AIzaSyC67ZMqywH6Nj_Jm5EjStcT4xq_qRv7yB8",
+            apiKey: "AIzaSyC67ZMqywH6Nj_Jm5EjStcT4xq_qRv7yB8",
             authDomain: "kulkas-ai.firebaseapp.com",
             projectId: "kulkas-ai",
             storageBucket: "kulkas-ai.firebasestorage.app",
@@ -166,21 +172,14 @@
             console.error("Firebase Init Error:", e); 
         }
 
-        // Fungsi Global untuk Hapus Resep
         window.deleteRecipe = async (event, docId) => {
-            // Mencegah klik tombol hapus memicu klik pada kartu (stopPropagation)
             event.stopPropagation();
-            
             if (!confirm("Yakin ingin menghapus resep ini dari history?")) return;
-
             try {
-                // Menghapus dokumen berdasarkan ID
                 await deleteDoc(doc(db, "recipes", docId));
                 alert("Resep berhasil dihapus.");
-                // Refresh list
-                const historyContainer = document.getElementById('history-container');
-                historyContainer.classList.add('hidden'); // Reset state
-                toggleHistory(); // Load ulang
+                document.getElementById('history-container').classList.add('hidden');
+                toggleHistory();
             } catch (e) {
                 alert("Gagal menghapus: " + e.message);
             }
@@ -269,7 +268,6 @@
             list.innerHTML = "<p class='col-span-2 text-center animate-pulse py-4'>Mengambil data cloud...</p>";
             
             try {
-                // Ambil data
                 const q = query(collection(db, "recipes"), orderBy("date", "desc"), limit(6));
                 const snap = await getDocs(q);
                 
@@ -280,7 +278,7 @@
 
                 snap.forEach(docSnap => {
                     const item = docSnap.data();
-                    const docId = docSnap.id; // Ambil ID Dokumen untuk keperluan hapus
+                    const docId = docSnap.id;
                     
                     const div = document.createElement('div');
                     div.className = "bg-white dark:bg-gray-800 p-4 rounded-xl shadow border-l-8 border-blue-500 mx-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition relative group";
@@ -299,7 +297,6 @@
                         <p class='text-[10px] opacity-50 truncate mt-1 pr-8'>${item.bahan}</p>
                     `;
                     
-                    // Klik card untuk load (stopPropagation di tombol hapus akan mencegah ini jalan saat hapus diklik)
                     div.onclick = () => {
                          renderRecipe('recipe-1', item.data.resep1, 'orange');
                          renderRecipe('recipe-2', item.data.resep2, 'red');
@@ -321,10 +318,8 @@
         const saveSettings = () => {
             const apiKey = document.getElementById('api-key-input').value.trim();
             const model = document.getElementById('model-input').value.trim();
-
             localStorage.setItem('gemini_api_key', apiKey);
             localStorage.setItem('gemini_selected_model', model);
-            
             alert("Pengaturan Berhasil Disimpan! Halaman akan dimuat ulang.");
             location.reload();
         };
